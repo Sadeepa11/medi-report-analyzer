@@ -142,7 +142,7 @@ const App = () => {
                 contents: [
                     {
                         parts: [
-                            { text: "Analyze the following medical report. Extract all relevant medical information into a well-structured JSON object. Group related items logically (e.g., patient details, lab results, imaging findings). The keys and structure should be based on the report's content." },
+                            { text: "Thoroughly analyze the provided medical report image. Extract all clinically relevant information and structure it into a clean, well-organized JSON object. Prioritize creating logical sections like 'patientInformation', 'vitalSigns', 'laboratoryResults', 'radiologyFindings', 'medications', and a 'clinicalSummary'. For list-like data such as lab results or medications, use arrays of objects. Ensure all values are correctly extracted and typed. If a section is not present in the report, omit it from the JSON." },
                             {
                                 inlineData: {
                                     mimeType: file.type,
@@ -173,6 +173,7 @@ const App = () => {
             if (result.candidates && result.candidates.length > 0 && result.candidates[0].content?.parts?.[0]?.text) {
                 const jsonText = result.candidates[0].content.parts[0].text;
                 const parsedJson = JSON.parse(jsonText);
+                console.log('Extracted Data Object:', parsedJson); // Log the object to the console
                 setExtractedData(parsedJson);
             } else {
                 console.error("Unexpected API response structure:", result);
@@ -251,9 +252,16 @@ const App = () => {
                                     {Object.entries(extractedData).map(([key, value]) => {
                                         const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
                                         
-                                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                                        // If the value is an array, render it within a ResultCard
+                                        if (Array.isArray(value)) {
+                                            return <ResultCard key={key} title={title} data={{ [key]: value }} />;
+                                        } 
+                                        // If the value is a non-array object, render it as a ResultCard
+                                        else if (typeof value === 'object' && value !== null) {
                                             return <ResultCard key={key} title={title} data={value} />;
-                                        } else if (typeof value === 'string' && value.length > 0) {
+                                        } 
+                                        // If the value is a string, display it directly
+                                        else if (typeof value === 'string' && value.length > 0) {
                                             return (
                                                  <div key={key} className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
                                                     <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
@@ -278,5 +286,6 @@ const App = () => {
 };
 
 export default App;
+
 
 
